@@ -100,19 +100,17 @@ public class Betting120 {
 	
 	public String toString(){
 		return "期数"+getSequenceNo()
+				+"-结果:"+num
 				+"-成本:"+cost
-				+getResultType()
+				+"-类型:"+getResultType()
 				+"-奖金:"+award
 				+"-中奖:"+(getResult()==1?"中":"不中");
 	}
 	
 	public String getResultType(){
-		if(getType()>2){
-			if(getType()==3)
-			return "-后三:"+"组六";
-			else
-				return "-后三:"+"组三";
+		if(isWin()){
+			return "120";
 		}
-		return "-奇偶:"+(getType()==1?"奇数":"偶数");
+		return "非120";
 	}
 }

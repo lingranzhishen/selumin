@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.openqa.selenium.By;
@@ -33,8 +34,10 @@ public class Yrapp {
 	private static final int sleepTime = 2000;
 	public static final String domain = "https://www.yiruncaifu.com/?index.php";
 	public static final String CQ_URL = "https://www.yiruncaifu.com?controller=default&action=lotterybet&nav=ssc";
+//	public static final String CQ_URL = "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
+	
 	public static int count = 10;
-	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "120");
+	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "_120");
 	static {
 		if (!log.exists()) {
 			try {
@@ -62,20 +65,8 @@ public class Yrapp {
 		driver.navigate().refresh();
 		OneDayBetting120 odb = new OneDayBetting120(getCurrentMoney(driver));
 		while (!odb.isFinish()) {
-			try {
-				FileUtils.writeStringToFile(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
-				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
-			} catch (IOException e) {
-			}
-			System.out.println("剩余金额:" + odb.getCurrentMoney());
-			System.out.println("目标金额:" + odb.getAimMoney());
 			betting(driver, odb);
-		}
-		try {
-			FileUtils.writeStringToFile(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
-			FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
-			FileUtils.write(log, "\n输赢:" + (odb.getCurrentMoney() > odb.getOldMoney() ? "赢" : "输"), true);
-		} catch (IOException e) {
+			refreshWait(driver);
 		}
 		// 关闭浏览器
 		return odb;
@@ -90,7 +81,7 @@ public class Yrapp {
 		WebElement submit = driver.findElement(By.id("submit"));
 
 		// 输入关键字
-		userName.sendKeys("lingran");
+		userName.sendKeys("lingran120");
 		password.sendKeys("h523588");
 		String code = readVerifyCode();
 		verifyCode.sendKeys(code);
@@ -157,7 +148,7 @@ public class Yrapp {
 				lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
 				Thread.sleep(10000);
 			}
-			if (odb.isCanBet() || odb.isSecondMiss()) {
+			if (odb.isCanBet()) {
 				betting.setSequenceNo(currentBettingSequenceNo.getText());
 				betting.setTimes(odb.getNextBettingCostTimes());
 				betting.setCost(betting.getTimes() * odb.getUnitCost());
@@ -199,7 +190,6 @@ public class Yrapp {
 				WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
 				alert_close_button.click();
 				Thread.sleep(2000);
-				System.out.println("期数:" + betting.getSequenceNo() + "投注:" + betting.getCost());
 			} else {
 				betting.setSequenceNo(currentBettingSequenceNo.getText());
 				betting.setCost(0);
@@ -208,9 +198,7 @@ public class Yrapp {
 			waitingResult(betting, driver);
 			odb.addBet(betting);
 			try {
-				FileUtils.write(log, "\n期数:" + betting.getSequenceNo() + "投注:" + betting.getCost(), true);
-				FileUtils.write(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
-				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
+				FileUtils.write(log, betting.toString(), true);
 			} catch (IOException e) {
 			}
 			System.out.println(betting);
@@ -238,7 +226,12 @@ public class Yrapp {
 				WebElement lastNum3 = driver.findElement(By.id("last_code_num3"));
 				WebElement lastNum4 = driver.findElement(By.id("last_code_num4"));
 				int lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
-
+				try {
+					FileUtils.write(log, "\nlastBettingSequenceNoIntValue........" + lastBettingSequenceNoIntValue,
+							true);
+					FileUtils.write(log, "\nwaiting........" + betting.getSequenceNoOfToday(), true);
+				} catch (IOException e) {
+				}
 				System.out.println("lastBettingSequenceNoIntValue........" + lastBettingSequenceNoIntValue);
 				System.out.print("waiting........" + betting.getSequenceNoOfToday());
 				while (betting.getSequenceNoOfToday() != lastBettingSequenceNoIntValue) {
@@ -246,16 +239,30 @@ public class Yrapp {
 					Thread.sleep(sleepTime * 5);
 					lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
 				}
+				Thread.sleep(sleepTime * 5);
 				System.out.println();
 				String lastNumStr = lastNum0.getText() + lastNum1.getText() + lastNum2.getText() + lastNum3.getText()
 						+ lastNum4.getText();
+				try {
+					FileUtils.write(log, "\n开奖号码" + lastNumStr, true);
+				} catch (IOException e) {
+				}
 				betting.setNum(lastNumStr);
-				if (is120(lastNumStr)) {
+				if (isLegalLottery(lastNumStr)) {
+					if (is120(lastNumStr)) {
+						betting.setResult(1);
+						betting.setAward(betting.getCost() * (Constant.CQ_120_WIN_RATIO + 1));
+					} else {
+						betting.setResult(0);
+						betting.setAward(0);
+					}
+				} else {
 					betting.setResult(1);
 					betting.setAward(betting.getCost() * (Constant.CQ_120_WIN_RATIO + 1));
-				} else {
-					betting.setResult(0);
-					betting.setAward(0);
+				}
+				try {
+					FileUtils.write(log, "\n开奖号码" + betting, true);
+				} catch (IOException e) {
 				}
 				isEnd = true;
 			} catch (Exception e) {
@@ -263,6 +270,23 @@ public class Yrapp {
 				Log.info(e.getMessage());
 			}
 		}
+	}
+
+	private static boolean isLegalLottery(String num) {
+		if (StringUtils.isEmpty(num)) {
+			return false;
+		}
+		if (num.length() != 5) {
+			return false;
+		}
+		for (int i = 0; i < num.length(); i++) {
+			if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
+				continue;
+			} else {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static void refreshWait(WebDriver driver) {
