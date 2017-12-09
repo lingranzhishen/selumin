@@ -27,17 +27,16 @@ import lottery.selumin.Constant;
  * Hello world!
  *
  */
-public class Yrapp {
+public class Yrapp2 {
 
 	public static final String lottoryType = "r_cqss";
 	private static final int sleepTime = 2000;
 	public static final String domain = "https://www.yiruncaifu168.com/?index.php";
-	public static final String CQ_URL = "https://www.yiruncaifu168.com/?controller=default&action=lotterybet&nav=ssc";
-	// public static final String CQ_URL =
-	// "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
-
+	//public static final String CQ_URL = "https://www.yiruncaifu188.com/?controller=default&action=lotterybet&nav=ssc";
+	public static final String CQ_URL = "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
+	
 	public static int count = 10;
-	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "_120");
+	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "second_120");
 	static {
 		if (!log.exists()) {
 			try {
@@ -81,9 +80,9 @@ public class Yrapp {
 		WebElement submit = driver.findElement(By.id("submit"));
 
 		// 输入关键字
-		// userName.sendKeys(readVerifyCode("用户名"));
-		// password.sendKeys(readVerifyCode("密码"));
-		userName.sendKeys("lingran");
+//		userName.sendKeys(readVerifyCode("用户名"));
+//		password.sendKeys(readVerifyCode("密码"));
+		userName.sendKeys("lingran120");
 		password.sendKeys("h523588");
 		String code = readVerifyCode("验证码");
 		verifyCode.sendKeys(code);
@@ -148,8 +147,8 @@ public class Yrapp {
 				currentBettingSequenceNoIntValue = CalculateUtil
 						.getSequenceIntValue(currentBettingSequenceNo.getText());
 				lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
-				if (lastBettingSequenceNoIntValue == 120) {
-					if (currentBettingSequenceNoIntValue == 1) {
+				if(lastBettingSequenceNoIntValue==120){
+					if(currentBettingSequenceNoIntValue==1){
 						break;
 					}
 				}
@@ -158,7 +157,7 @@ public class Yrapp {
 			betting.setSequenceNo(currentBettingSequenceNo.getText());
 			betting.setTimes(odb.getNextBettingCostTimes());
 			betting.setCost(betting.getTimes() * odb.getUnitCost());
-			if (odb.isCanBet()) {
+			if (odb.isSecondMiss()) {
 				WebElement two1 = driver.findElement(By.id("two1"));
 				two1.click();
 				WebElement smalllabel_1_0 = null;
@@ -177,12 +176,12 @@ public class Yrapp {
 				Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
 				sel.selectByIndex(3);
 				WebElement lt_sel_insert = driver.findElement(By.id("lt_sel_insert"));
-				WebElement lt_trace_if_button_div = driver.findElement(By.id("lt_trace_if_button_div"));
-
+				WebElement lt_trace_if_button_div=driver.findElement(By.id("lt_trace_if_button_div"));
+				
 				lt_sel_insert.click();
 				Thread.sleep(2000);
 				lt_trace_if_button_div.click();
-
+				
 				Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
 				WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
 				WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
@@ -194,14 +193,13 @@ public class Yrapp {
 				Thread.sleep(2000);
 				lt_sendok_c2.click();
 				Thread.sleep(2000);
-				confirm_yes = driver.findElement(By.id("confirm_yes"));
+				confirm_yes=driver.findElement(By.id("confirm_yes"));
 				confirm_yes.click();
-
+				
 				WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
 				alert_close_button.click();
 				Thread.sleep(2000);
 			}
-			odb.setSettingCount(1);
 			waitingResult(betting, driver);
 			odb.addBet(betting);
 			try {
@@ -242,22 +240,6 @@ public class Yrapp {
 				System.out.println("lastBettingSequenceNoIntValue........" + lastBettingSequenceNoIntValue);
 				System.out.print("waiting........" + betting.getSequenceNoOfToday());
 				while (betting.getSequenceNoOfToday() != lastBettingSequenceNoIntValue) {
-					if (betting.getSequenceNoOfToday() == 1) {
-						try {
-							FileUtils.write(log, "\n新的一天开始了", true);
-						} catch (IOException e) {
-						}
-					} else if (betting.getSequenceNoOfToday() + 1 < lastBettingSequenceNoIntValue) {
-						try {
-							FileUtils.write(log, "\n开奖号码失败", true);
-						} catch (IOException e) {
-						}
-						isEnd = true;
-						betting.setNum("12345");
-						betting.setResult(1);
-						betting.setAward(betting.getCost() * (Constant.CQ_120_WIN_RATIO + 1));
-						break;
-					}
 					System.out.print(".");
 					Thread.sleep(sleepTime * 5);
 					lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
@@ -344,7 +326,7 @@ public class Yrapp {
 	 * 输入验证码
 	 */
 	public static String readVerifyCode(String hint) {
-		System.out.println("请输入" + hint + ":");
+		System.out.println("请输入"+hint+":");
 		Scanner s = new Scanner(System.in);
 		return s.nextLine();
 	}
