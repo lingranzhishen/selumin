@@ -20,9 +20,29 @@ public class OneDayBetting120 {
 	private double unitCost;
 	private int continueCount = 0;// 连续次数
 	private int continueMissCount = 0;// 连续遗漏次数
+	private int bettingCount;
 
+	public void setSettingCount(int c){
+		bettingCount=c;
+	}
 	public boolean isCanBet() {
-		return continueMissCount < MAX_MISS_COUNT;
+		if (bettingList.isEmpty()) {
+			return false;
+		}
+		if(bettingCount>0){
+			return false;
+		}
+
+		return isSecondMiss();
+	}
+
+	public void reset() {
+		if (bettingList != null) {
+			bettingList.clear();
+		}
+		continueCount=0;
+		continueMissCount=0;
+		bettingCount=0;
 	}
 
 	public boolean isSecondMiss() {
@@ -126,31 +146,33 @@ public class OneDayBetting120 {
 	}
 
 	public void addBet(Betting120 betting) {
-		int lastSeq=0;
-		if(bettingList.isEmpty()){
-			lastSeq=betting.getSequenceNoOfToday()-1;
-		}else{
-			lastSeq=bettingList.peek().getSequenceNoOfToday();
+		int lastSeq = 0;
+		if (bettingList.isEmpty()) {
+			lastSeq = betting.getSequenceNoOfToday() - 1;
+		} else {
+			lastSeq = bettingList.peek().getSequenceNoOfToday();
 		}
 		int seq = betting.getSequenceNoOfToday();
 		bettingList.add(betting);
 		if (betting.isWin()) {
 			this.continueCount++;
 			this.continueMissCount = 0;
+			this.bettingCount=0;
 		} else {
 			this.continueCount = 0;
 			this.continueMissCount++;
 		}
 
-		if (seq != lastSeq + 1) {
-			try{
-			FileUtils.write(Yrapp.log, "下注不连续_"+seq+"_"+lastSeq, true);
-			}catch(Exception e){
-				
+		if (seq != lastSeq + 1 && (lastSeq != 120)) {
+
+			try {
+				FileUtils.write(Yrapp.log, "下注不连续_" + seq + "_" + lastSeq, true);
+			} catch (Exception e) {
+
 			}
-			if(this.continueMissCount>0){
-				this.continueCount=1;
-				this.continueMissCount = 0;
+			if (this.continueMissCount > 0) {
+				this.continueCount = 0;
+				this.continueMissCount = 1;
 			}
 		}
 		setCurrentMoney(currentMoney - betting.getCost() + betting.getAward());
