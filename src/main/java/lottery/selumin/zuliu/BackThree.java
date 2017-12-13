@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.util.log.Log;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -18,8 +19,11 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
 
+import com.google.gson.JsonObject;
+
 import lottery.selumin.CalculateUtil;
 import lottery.selumin.Constant;
+import lottery.selumin.HttpUtil;
 
 /**
  * Hello world!
@@ -29,8 +33,8 @@ public class BackThree {
 
 	public static final String lottoryType = "r_cqss";
 	private static final int sleepTime = 2000;
-	public static final String domain = "https://www.yiruncaifu168.com/?index.php";
-	public static final String CQ_URL = "https://www.yiruncaifu168.com/?controller=default&action=lotterybet&nav=ssc";
+	public static final String domain = "https://www.yrcf666.com/?index.php";
+	public static final String CQ_URL = "https://www.yrcf666.com/?controller=default&action=lotterybet&nav=ssc";
 
 	public static int count = 10;
 	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "组三");
@@ -53,18 +57,21 @@ public class BackThree {
 			;
 		}
 		refreshWait(driver);
-		while (count-- > 0) {
-			OneDayBackThreeBetting odb = betting(driver);
-			if (odb.isAllFinish()) {
-				break;
-			}
-		}
+		OneDayBackThreeBetting odb = betting(driver);
 		driver.quit();
+	}
+
+	public static void logger(String msg) {
+		try {
+			FileUtils.write(log, msg+"\n", true);
+		} catch (IOException e) {
+		}
 	}
 
 	public static OneDayBackThreeBetting betting(WebDriver driver) {
 		driver.navigate().refresh();
 		OneDayBackThreeBetting odb = new OneDayBackThreeBetting(getCurrentMoney(driver));
+		odb.getBettingList().addAll(HttpUtil.getBettingFromRemote());
 		while (!odb.isFinish()) {
 			try {
 				FileUtils.writeStringToFile(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
@@ -111,6 +118,7 @@ public class BackThree {
 		driver.get(domain);
 		return !doesWebElementExist(driver, By.id("userName"));
 	}
+
 	/**
 	 * 输入验证码
 	 */
@@ -119,6 +127,7 @@ public class BackThree {
 		Scanner s = new Scanner(System.in);
 		return s.nextLine();
 	}
+
 	public static boolean doesWebElementExist(WebDriver driver, By selector) {
 
 		try {
@@ -182,7 +191,7 @@ public class BackThree {
 				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
 			} catch (IOException e) {
 			}
-			System.out.println(betting);
+			System.out.println(betting.getNum());
 			return betting;
 		} catch (Exception e) {
 			try {
@@ -198,6 +207,7 @@ public class BackThree {
 	private static void bettingSix(WebDriver driver, List<BettingRule> bettingRules) {
 		for (int i = 0; i < bettingRules.size(); i++) {
 			try {
+				logger(JSON.toString(bettingRules.get(i)));
 				bettingSix(driver, bettingRules.get(i));
 			} catch (Exception e) {
 
@@ -215,11 +225,11 @@ public class BackThree {
 		List<WebElement> checks = poschoose.findElements(By.className("posChoose"));
 		for (WebElement element : checks) {
 			if (bettingRules.getCheckBoxValues().contains(Integer.valueOf(element.getAttribute("value")))) {
-				if(!element.isSelected()){
+				if (!element.isSelected()) {
 					element.click();
 				}
-			}else{
-				if(element.isSelected()){
+			} else {
+				if (element.isSelected()) {
 					element.click();
 				}
 			}
@@ -234,7 +244,7 @@ public class BackThree {
 		}
 
 		Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
-		sel.selectByIndex(2);
+		sel.selectByIndex(3);
 		WebElement lt_sel_insert = driver.findElement(By.id("lt_sel_insert"));
 		WebElement lt_trace_if_button_div = driver.findElement(By.id("lt_trace_if_button_div"));
 
@@ -247,7 +257,7 @@ public class BackThree {
 		Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
 		WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
 		WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
-		lt_trace_qissueno.selectByValue("5");
+		lt_trace_qissueno.selectByValue("10");
 		lt_trace_ok.click();
 		WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
 
@@ -316,10 +326,7 @@ public class BackThree {
 				} catch (IOException e) {
 				}
 				betting.setNum(lastNumStr);
-				try {
-					FileUtils.write(log, "\n开奖号码" + betting, true);
-				} catch (IOException e) {
-				}
+				
 				isEnd = true;
 			} catch (Exception e) {
 				isEnd = false;

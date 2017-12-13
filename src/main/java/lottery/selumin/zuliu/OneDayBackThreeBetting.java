@@ -23,7 +23,7 @@ public class OneDayBackThreeBetting {
 	}
 
 	public OneDayBackThreeBetting() {
-		bettingList = new Stack<>();
+		bettingList = new ArrayList<>();
 		day = LocalDate.now();
 	}
 
@@ -95,13 +95,6 @@ public class OneDayBackThreeBetting {
 
 	private List<BettingRule> getMatchResult(List<Betting> lotteryRecords) {
 		List<BettingRule> bettings = new ArrayList<BettingRule>();
-		BettingRule br = new BettingRule();
-		br.getCheckBoxValues().add(1);
-		br.getCheckBoxValues().add(2);
-		br.getCheckBoxValues().add(3);
-		br.getMissNums().add(1);
-		br.getMissNums().add(2);
-		bettings.add(br);
 		for (int f = 0; f < 5; f++)
 			for (int s = f + 1; s < 5; s++)
 				for (int t = s + 1; t < 5; t++) {
