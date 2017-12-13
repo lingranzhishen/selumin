@@ -1,4 +1,4 @@
-package lottery.selumin.yr;
+package lottery.selumin.zuliu;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,36 +9,31 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
 
-import lottery.selumin.Betting;
 import lottery.selumin.CalculateUtil;
 import lottery.selumin.Constant;
-import lottery.selumin.OneDayBetting;
 
 /**
  * Hello world!
  *
  */
-public class Yrapp {
+public class BackThree {
 
 	public static final String lottoryType = "r_cqss";
 	private static final int sleepTime = 2000;
 	public static final String domain = "https://www.yiruncaifu168.com/?index.php";
 	public static final String CQ_URL = "https://www.yiruncaifu168.com/?controller=default&action=lotterybet&nav=ssc";
-	// public static final String CQ_URL =
-	// "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
 
 	public static int count = 10;
-	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "_120");
+	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "组三");
 	static {
 		if (!log.exists()) {
 			try {
@@ -58,16 +53,33 @@ public class Yrapp {
 			;
 		}
 		refreshWait(driver);
-		OneDayBetting120 odb = betting120(driver);
+		while (count-- > 0) {
+			OneDayBackThreeBetting odb = betting(driver);
+			if (odb.isAllFinish()) {
+				break;
+			}
+		}
 		driver.quit();
 	}
 
-	public static OneDayBetting120 betting120(WebDriver driver) {
+	public static OneDayBackThreeBetting betting(WebDriver driver) {
 		driver.navigate().refresh();
-		OneDayBetting120 odb = new OneDayBetting120(getCurrentMoney(driver));
+		OneDayBackThreeBetting odb = new OneDayBackThreeBetting(getCurrentMoney(driver));
 		while (!odb.isFinish()) {
+			try {
+				FileUtils.writeStringToFile(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
+				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
+			} catch (IOException e) {
+			}
+			System.out.println("剩余金额:" + odb.getCurrentMoney());
+			System.out.println("目标金额:" + odb.getAimMoney());
 			betting(driver, odb);
-			refreshWait(driver);
+		}
+		try {
+			FileUtils.writeStringToFile(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
+			FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
+			FileUtils.write(log, "\n输赢:" + (odb.getCurrentMoney() > odb.getOldMoney() ? "赢" : "输"), true);
+		} catch (IOException e) {
 		}
 		// 关闭浏览器
 		return odb;
@@ -84,7 +96,7 @@ public class Yrapp {
 		// 输入关键字
 		// userName.sendKeys(readVerifyCode("用户名"));
 		// password.sendKeys(readVerifyCode("密码"));
-		userName.sendKeys("lingran");
+		userName.sendKeys("lingran120");
 		password.sendKeys("h523588");
 		String code = readVerifyCode("验证码");
 		verifyCode.sendKeys(code);
@@ -98,9 +110,15 @@ public class Yrapp {
 		}
 		driver.get(domain);
 		return !doesWebElementExist(driver, By.id("userName"));
-
 	}
-
+	/**
+	 * 输入验证码
+	 */
+	public static String readVerifyCode(String hint) {
+		System.out.println("请输入" + hint + ":");
+		Scanner s = new Scanner(System.in);
+		return s.nextLine();
+	}
 	public static boolean doesWebElementExist(WebDriver driver, By selector) {
 
 		try {
@@ -113,30 +131,27 @@ public class Yrapp {
 
 	private static double getCurrentMoney(WebDriver driver) {
 		Double currentMoney = null;
-		driver.navigate().to(domain);
+		driver.navigate().to(CQ_URL);
 		while (currentMoney == null) {
 			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 			WebElement money = driver.findElement(By.id("refff"));
 			try {
-				currentMoney = Double.parseDouble(money.getText().replaceAll(",", ""));
+				currentMoney = Double.parseDouble(money.getText());
 			} catch (Exception e) {
 				currentMoney = null;
 			}
 		}
-		if (OneDayBetting120.initialMoney < 1) {
-			OneDayBetting120.initialMoney = currentMoney;
-		}
 		return currentMoney;
 	}
 
-	private static Betting120 betting(WebDriver driver, OneDayBetting120 odb) {
+	private static Betting betting(WebDriver driver, OneDayBackThreeBetting odb) {
 		try {
 			driver.navigate().to(CQ_URL);
 			Thread.sleep(sleepTime);
-			Betting120 betting = new Betting120();
-			Thread.sleep(sleepTime);
 			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 			driver.switchTo().frame(driver.findElement(By.id("main")));
+			List<BettingRule> bettingRules = odb.getNextBetting();
+			Betting betting = new Betting();
 
 			WebElement lastBettingSequenceNo = driver.findElement(By.id("nowolddiv"));
 			WebElement currentBettingSequenceNo = driver.findElement(By.id("current_issue"));
@@ -149,81 +164,112 @@ public class Yrapp {
 				currentBettingSequenceNoIntValue = CalculateUtil
 						.getSequenceIntValue(currentBettingSequenceNo.getText());
 				lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
-				if (lastBettingSequenceNoIntValue == 120) {
-					if (currentBettingSequenceNoIntValue == 1) {
-						break;
-					}
-				}
 				Thread.sleep(10000);
 			}
 			betting.setSequenceNo(currentBettingSequenceNo.getText());
-			betting.setTimes(odb.getNextBettingCostTimes());
-			betting.setCost(betting.getTimes() * odb.getUnitCost());
-			if (odb.isCanBet()) {
-				WebElement two1 = driver.findElement(By.id("two1"));
-				two1.click();
-				WebElement smalllabel_1_0 = null;
-				List<WebElement> smalllabels = driver.findElement(By.id("lt_samll_label"))
-						.findElements(By.tagName("label"));
-				for (WebElement e : smalllabels) {
-					if (StringUtil.endsWithIgnoreCase("组选120", e.getText())) {
-						smalllabel_1_0 = e;
-						break;
-					}
+			if (bettingRules != null && bettingRules.size() > 0) {
+				try {
+					bettingSix(driver, bettingRules);
+				} catch (Exception e) {
+
 				}
-				smalllabel_1_0.click();
-				WebElement rightNums = driver.findElement(By.id("right_05"));
-				WebElement allElement = rightNums.findElement(By.name("all"));// 全
-				allElement.click();
-				Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
-				sel.selectByIndex(3);
-				WebElement lt_sel_insert = driver.findElement(By.id("lt_sel_insert"));
-				WebElement lt_trace_if_button_div = driver.findElement(By.id("lt_trace_if_button_div"));
-
-				lt_sel_insert.click();
-				Thread.sleep(2000);
-				lt_trace_if_button_div.click();
-
-				Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
-				WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
-				WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
-				lt_trace_qissueno.selectByValue("10");
-				lt_trace_ok.click();
-				WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
-
-				confirm_yes.click();
-				Thread.sleep(2000);
-				lt_sendok_c2.click();
-				Thread.sleep(2000);
-				confirm_yes = driver.findElement(By.id("confirm_yes"));
-				confirm_yes.click();
-
-				WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
-				alert_close_button.click();
-				Thread.sleep(2000);
 			}
-			odb.setSettingCount(1);
+			Thread.sleep(sleepTime);
 			waitingResult(betting, driver);
 			odb.addBet(betting);
 			try {
-				FileUtils.write(log, betting.toString(), true);
+				FileUtils.write(log, "\n剩余金额:" + getCurrentMoney(driver), true);
+				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
 			} catch (IOException e) {
 			}
 			System.out.println(betting);
 			return betting;
 		} catch (Exception e) {
-			Log.info(e.getMessage());
+			try {
+				FileUtils.write(log, e.getMessage(), true);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+
 		}
 		return null;
 	}
 
-	public static void waitingResult(Betting120 betting, WebDriver driver) {
+	private static void bettingSix(WebDriver driver, List<BettingRule> bettingRules) {
+		for (int i = 0; i < bettingRules.size(); i++) {
+			try {
+				bettingSix(driver, bettingRules.get(i));
+			} catch (Exception e) {
+
+			}
+		}
+	}
+
+	private static void bettingSix(WebDriver driver, BettingRule bettingRules) throws InterruptedException {
+
+		WebElement ChooseFun = driver.findElement(By.className("ChooseFun"));
+		ChooseFun.click();
+		WebElement zuliu = driver.findElement(By.xpath("//*[@id=\"lt_samll_label\"]/div/div[2]/div[2]/label[2]"));
+		zuliu.click();
+		WebElement poschoose = driver.findElement(By.id("poschoose"));
+		List<WebElement> checks = poschoose.findElements(By.className("posChoose"));
+		for (WebElement element : checks) {
+			if (bettingRules.getCheckBoxValues().contains(Integer.valueOf(element.getAttribute("value")))) {
+				if(!element.isSelected()){
+					element.click();
+				}
+			}else{
+				if(element.isSelected()){
+					element.click();
+				}
+			}
+		}
+
+		WebElement numContainer = driver.findElement(By.xpath("//*[@id=\"right_05\"]/div/ul[1]"));
+		List<WebElement> nums = numContainer.findElements(By.name("lt_place_0"));
+		for (WebElement num : nums) {
+			if (!bettingRules.getMissNums().contains(Integer.valueOf(num.getText()))) {
+				num.click();
+			}
+		}
+
+		Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
+		sel.selectByIndex(2);
+		WebElement lt_sel_insert = driver.findElement(By.id("lt_sel_insert"));
+		WebElement lt_trace_if_button_div = driver.findElement(By.id("lt_trace_if_button_div"));
+
+		lt_sel_insert.click();
+		Thread.sleep(sleepTime);
+		lt_trace_if_button_div.click();
+		WebElement button13 = driver.findElement(By.id("button13"));
+		button13.click();
+		Thread.sleep(sleepTime);
+		Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
+		WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
+		WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
+		lt_trace_qissueno.selectByValue("5");
+		lt_trace_ok.click();
+		WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
+
+		confirm_yes.click();
+		Thread.sleep(sleepTime);
+		lt_sendok_c2.click();
+		Thread.sleep(sleepTime);
+		confirm_yes = driver.findElement(By.id("confirm_yes"));
+		confirm_yes.click();
+
+		WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
+		alert_close_button.click();
+		Thread.sleep(sleepTime);
+
+	}
+
+	public static void waitingResult(Betting betting, WebDriver driver) {
 		boolean isEnd = false;
 		while (!isEnd) {
 			try {
 				driver.navigate().to(CQ_URL);
-				Thread.sleep(1000);
-				Thread.sleep(5000);
+				Thread.sleep(sleepTime);
 				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 				driver.switchTo().frame(driver.findElement(By.id("main")));
 
@@ -255,8 +301,6 @@ public class Yrapp {
 						}
 						isEnd = true;
 						betting.setNum("12345");
-						betting.setResult(1);
-						betting.setAward(betting.getCost() * (Constant.CQ_120_WIN_RATIO + 1));
 						break;
 					}
 					System.out.print(".");
@@ -272,18 +316,6 @@ public class Yrapp {
 				} catch (IOException e) {
 				}
 				betting.setNum(lastNumStr);
-				if (isLegalLottery(lastNumStr)) {
-					if (is120(lastNumStr)) {
-						betting.setResult(1);
-						betting.setAward(betting.getCost() * (Constant.CQ_120_WIN_RATIO + 1));
-					} else {
-						betting.setResult(0);
-						betting.setAward(0);
-					}
-				} else {
-					betting.setResult(0);
-					betting.setAward(0);
-				}
 				try {
 					FileUtils.write(log, "\n开奖号码" + betting, true);
 				} catch (IOException e) {
@@ -294,23 +326,6 @@ public class Yrapp {
 				Log.info(e.getMessage());
 			}
 		}
-	}
-
-	private static boolean isLegalLottery(String num) {
-		if (StringUtils.isEmpty(num)) {
-			return false;
-		}
-		if (num.length() != 5) {
-			return false;
-		}
-		for (int i = 0; i < num.length(); i++) {
-			if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
-				continue;
-			} else {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	public static void refreshWait(WebDriver driver) {
@@ -330,22 +345,11 @@ public class Yrapp {
 		}
 	}
 
-	public static boolean is120(String num) {
-		char[] numArray = num.toCharArray();
-		for (int i = 0; i < numArray.length; i++) {
-			for (int j = i + 1; j < numArray.length; j++) {
-				if (numArray[i] == numArray[j])
-					return false;
-			}
-		}
-		return true;
-	}
-
 	/**
 	 * 输入验证码
 	 */
-	public static String readVerifyCode(String hint) {
-		System.out.println("请输入" + hint + ":");
+	public static String readVerifyCode() {
+		System.out.println("请输入验证码:");
 		Scanner s = new Scanner(System.in);
 		return s.nextLine();
 	}
