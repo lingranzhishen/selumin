@@ -19,10 +19,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
 
-import lottery.selumin.Betting;
 import lottery.selumin.CalculateUtil;
 import lottery.selumin.Constant;
-import lottery.selumin.OneDayBetting;
 
 /**
  * Hello world!

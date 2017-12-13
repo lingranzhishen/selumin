@@ -1,4 +1,4 @@
-package lottery.selumin;
+package lottery.selumin.zuliu;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,14 +9,18 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.log.Log;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.Select;
+
+import lottery.selumin.CalculateUtil;
+import lottery.selumin.Constant;
+import lottery.selumin.yr.Betting120;
 
 /**
  * Hello world!
@@ -25,7 +29,10 @@ import org.openqa.selenium.support.ui.Select;
 public class BackThree {
 
 	public static final String lottoryType = "r_cqss";
-	public static final String domain = "https://www.xbtx002.com/";
+	private static final int sleepTime = 2000;
+	public static final String domain = "https://www.yiruncaifu168.com/?index.php";
+	public static final String CQ_URL = "https://www.yiruncaifu168.com/?controller=default&action=lotterybet&nav=ssc";
+
 	public static int count = 10;
 	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "组三");
 	static {
@@ -88,9 +95,11 @@ public class BackThree {
 		WebElement submit = driver.findElement(By.id("submit"));
 
 		// 输入关键字
-		userName.sendKeys("lingran");
+		// userName.sendKeys(readVerifyCode("用户名"));
+		// password.sendKeys(readVerifyCode("密码"));
+		userName.sendKeys("lingran120");
 		password.sendKeys("h523588");
-		String code = readVerifyCode();
+		String code = readVerifyCode("验证码");
 		verifyCode.sendKeys(code);
 		// 提交 input 所在的 form
 		submit.click();
@@ -100,10 +109,17 @@ public class BackThree {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		driver.get(domain);
 		return !doesWebElementExist(driver, By.id("userName"));
-
 	}
-
+	/**
+	 * 输入验证码
+	 */
+	public static String readVerifyCode(String hint) {
+		System.out.println("请输入" + hint + ":");
+		Scanner s = new Scanner(System.in);
+		return s.nextLine();
+	}
 	public static boolean doesWebElementExist(WebDriver driver, By selector) {
 
 		try {
@@ -116,7 +132,7 @@ public class BackThree {
 
 	private static double getCurrentMoney(WebDriver driver) {
 		Double currentMoney = null;
-		driver.navigate().to(domain + "?index.php");
+		driver.navigate().to(CQ_URL);
 		while (currentMoney == null) {
 			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 			WebElement money = driver.findElement(By.id("refff"));
@@ -126,32 +142,20 @@ public class BackThree {
 				currentMoney = null;
 			}
 		}
-		if (OneDayBetting.initialMoney < 1) {
-			OneDayBetting.initialMoney = currentMoney;
-		}
 		return currentMoney;
 	}
 
 	private static Betting betting(WebDriver driver, OneDayBackThreeBetting odb) {
 		try {
-			driver.navigate().to(domain + "?index.php");
-			Thread.sleep(5000);
-			Betting betting = new Betting();
-			WebElement r_cqss = driver.findElement(By.id(lottoryType));
-			// driver.navigate().to("https://www.xbtx88.com/?nav=ssc");
-			r_cqss.click();
-			Thread.sleep(5000);
+			driver.navigate().to(CQ_URL);
+			Thread.sleep(sleepTime);
 			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 			driver.switchTo().frame(driver.findElement(By.id("main")));
+			List<BettingRule> bettingRules = odb.getNextBetting();
+			Betting betting = new Betting();
 
 			WebElement lastBettingSequenceNo = driver.findElement(By.id("nowolddiv"));
 			WebElement currentBettingSequenceNo = driver.findElement(By.id("current_issue"));
-			WebElement ge = driver.findElement(By.id("last_code_num4"));
-			WebElement shi = driver.findElement(By.id("last_code_num3"));
-			WebElement bai = driver.findElement(By.id("last_code_num2"));
-			int geNum = Integer.valueOf(ge.getText());// 个位数
-			int shiNum = Integer.valueOf(shi.getText());// 十位数
-			int baiNum = Integer.valueOf(bai.getText());// 百位数
 			// 上次投注期数
 			int lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
 			int currentBettingSequenceNoIntValue = CalculateUtil
@@ -163,118 +167,159 @@ public class BackThree {
 				lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
 				Thread.sleep(10000);
 			}
-			geNum = Integer.valueOf(ge.getText());// 个位数
-			shiNum = Integer.valueOf(shi.getText());// 十位数
-			baiNum = Integer.valueOf(bai.getText());// 百位数
 			betting.setSequenceNo(currentBettingSequenceNo.getText());
-			if (geNum != shiNum && shiNum != baiNum && geNum != baiNum) {
-				betting.setType(3);
-			} else {
-				betting.setType(4);
-			}
+			if (bettingRules != null && bettingRules.size() > 0) {
+				try {
+					bettingSix(driver, bettingRules);
+				} catch (Exception e) {
 
-			betting.setCost(odb.getNextBettingCost());
-			WebElement two6 = driver.findElement(By.id("two6"));
-			two6.click();
-			WebElement zu6 = null;
-			WebElement t = driver.findElement(By.id("lt_samll_label"));
-			List<WebElement> playDetailList = t.findElements(By.className("SecondPlayClass_List"));
-			for (WebElement we : playDetailList) {
-				WebElement playTitle = we.findElement(By.className("methodgroupname"));
-				if (playTitle.getText().contains("后三组选")) {
-					WebElement zu = we.findElement(By.className("play_detail"));
-					List<WebElement> zuArray = zu.findElements(By.cssSelector("label"));
-					for (WebElement w : zuArray) {
-						if (w.getText().equalsIgnoreCase("组六")) {
-							zu6 = w;
-						}
-					}
 				}
 			}
-			zu6.click();
-			WebElement rightNums = driver.findElement(By.id("right_05"));
-			WebElement allElement = rightNums.findElement(By.name("all"));// 全
-			Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
-			sel.selectByIndex(3);
-			WebElement bettingRightNow = driver.findElement(By.id("lt_sel_onekeybet"));
-			WebElement lt_sel_times = driver.findElement(By.id("lt_sel_times"));
-			WebElement plus_sel_times = driver.findElement(By.className("plus"));
-			allElement.click();
-			int times = odb.getNextBettingTimes();
-			// lt_sel_times.sendKeys(String.valueOf(times - 1));
-			while (--times > 0) {
-				plus_sel_times.click();
-				Thread.sleep(500);
-			}
-
-			bettingRightNow.click();
-			// WebElement JS_blockPage =
-			// driver.findElement(By.className("JS_blockPage"));
-
-			WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
-			confirm_yes.click();
-			Thread.sleep(5000);
-			WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
-			alert_close_button.click();
-			Thread.sleep(5000);
-			System.out.println("期数:" + betting.getSequenceNo() + "投注:" + betting.getCost());
+			Thread.sleep(sleepTime);
 			waitingResult(betting, driver);
 			odb.addBet(betting);
 			try {
-				FileUtils.write(log, "\n期数:" + betting.getSequenceNo() + "投注:" + betting.getCost(), true);
-				FileUtils.write(log, "\n剩余金额:" + odb.getCurrentMoney(), true);
+				FileUtils.write(log, "\n剩余金额:" + getCurrentMoney(driver), true);
 				FileUtils.write(log, "\n目标金额:" + odb.getAimMoney(), true);
 			} catch (IOException e) {
 			}
 			System.out.println(betting);
 			return betting;
 		} catch (Exception e) {
-			Log.info(e.getMessage());
+			try {
+				FileUtils.write(log, e.getMessage(), true);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+
 		}
 		return null;
+	}
+
+	private static void bettingSix(WebDriver driver, List<BettingRule> bettingRules) {
+		for (int i = 0; i < bettingRules.size(); i++) {
+			try {
+				bettingSix(driver, bettingRules.get(i));
+			} catch (Exception e) {
+
+			}
+		}
+	}
+
+	private static void bettingSix(WebDriver driver, BettingRule bettingRules) throws InterruptedException {
+
+		WebElement ChooseFun = driver.findElement(By.className("ChooseFun"));
+		ChooseFun.click();
+		WebElement zuliu = driver.findElement(By.xpath("//*[@id=\"lt_samll_label\"]/div/div[2]/div[2]/label[2]"));
+		zuliu.click();
+		WebElement poschoose = driver.findElement(By.id("poschoose"));
+		List<WebElement> checks = poschoose.findElements(By.className("posChoose"));
+		for (WebElement element : checks) {
+			if (bettingRules.getCheckBoxValues().contains(Integer.valueOf(element.getAttribute("value")))) {
+				if(!element.isSelected()){
+					element.click();
+				}
+			}else{
+				if(element.isSelected()){
+					element.click();
+				}
+			}
+		}
+
+		WebElement numContainer = driver.findElement(By.xpath("//*[@id=\"right_05\"]/div/ul[1]"));
+		List<WebElement> nums = numContainer.findElements(By.name("lt_place_0"));
+		for (WebElement num : nums) {
+			if (!bettingRules.getMissNums().contains(Integer.valueOf(num.getText()))) {
+				num.click();
+			}
+		}
+
+		Select sel = new Select(driver.findElement(By.name("lt_project_modes")));
+		sel.selectByIndex(2);
+		WebElement lt_sel_insert = driver.findElement(By.id("lt_sel_insert"));
+		WebElement lt_trace_if_button_div = driver.findElement(By.id("lt_trace_if_button_div"));
+
+		lt_sel_insert.click();
+		Thread.sleep(sleepTime);
+		lt_trace_if_button_div.click();
+		WebElement button13 = driver.findElement(By.id("button13"));
+		button13.click();
+		Thread.sleep(sleepTime);
+		Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
+		WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
+		WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
+		lt_trace_qissueno.selectByValue("5");
+		lt_trace_ok.click();
+		WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
+
+		confirm_yes.click();
+		Thread.sleep(sleepTime);
+		lt_sendok_c2.click();
+		Thread.sleep(sleepTime);
+		confirm_yes = driver.findElement(By.id("confirm_yes"));
+		confirm_yes.click();
+
+		WebElement alert_close_button = driver.findElement(By.id("alert_close_button"));
+		alert_close_button.click();
+		Thread.sleep(sleepTime);
+
 	}
 
 	public static void waitingResult(Betting betting, WebDriver driver) {
 		boolean isEnd = false;
 		while (!isEnd) {
 			try {
-				driver.navigate().to(domain + "?index.php");
-				Thread.sleep(5000);
-				WebElement r_cqss = driver.findElement(By.id(lottoryType));
-				// driver.navigate().to("https://www.xbtx88.com/?nav=ssc");
-				r_cqss.click();
-				Thread.sleep(5000);
+				driver.navigate().to(CQ_URL);
+				Thread.sleep(sleepTime);
 				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 				driver.switchTo().frame(driver.findElement(By.id("main")));
 
 				WebElement lastBettingSequenceNo = driver.findElement(By.id("nowolddiv"));
-				WebElement ge = driver.findElement(By.id("last_code_num4"));
-				WebElement shi = driver.findElement(By.id("last_code_num3"));
-				WebElement bai = driver.findElement(By.id("last_code_num2"));
-				int geNum = Integer.valueOf(ge.getText());// 个位数
-				int shiNum = Integer.valueOf(shi.getText());// 十位数
-				int baiNum = Integer.valueOf(bai.getText());// 百位数
+				WebElement lastNum0 = driver.findElement(By.id("last_code_num0"));
+				WebElement lastNum1 = driver.findElement(By.id("last_code_num1"));
+				WebElement lastNum2 = driver.findElement(By.id("last_code_num2"));
+				WebElement lastNum3 = driver.findElement(By.id("last_code_num3"));
+				WebElement lastNum4 = driver.findElement(By.id("last_code_num4"));
 				int lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
-
+				try {
+					FileUtils.write(log, "\nlastBettingSequenceNoIntValue........" + lastBettingSequenceNoIntValue,
+							true);
+					FileUtils.write(log, "\nwaiting........" + betting.getSequenceNoOfToday(), true);
+				} catch (IOException e) {
+				}
 				System.out.println("lastBettingSequenceNoIntValue........" + lastBettingSequenceNoIntValue);
 				System.out.print("waiting........" + betting.getSequenceNoOfToday());
 				while (betting.getSequenceNoOfToday() != lastBettingSequenceNoIntValue) {
+					if (betting.getSequenceNoOfToday() == 1) {
+						try {
+							FileUtils.write(log, "\n新的一天开始了", true);
+						} catch (IOException e) {
+						}
+					} else if (betting.getSequenceNoOfToday() + 1 < lastBettingSequenceNoIntValue) {
+						try {
+							FileUtils.write(log, "\n开奖号码失败", true);
+						} catch (IOException e) {
+						}
+						isEnd = true;
+						betting.setNum("12345");
+						break;
+					}
 					System.out.print(".");
-					Thread.sleep(30000);
+					Thread.sleep(sleepTime * 5);
 					lastBettingSequenceNoIntValue = CalculateUtil.getSequenceIntValue(lastBettingSequenceNo.getText());
 				}
+				Thread.sleep(sleepTime * 5);
 				System.out.println();
-				geNum = Integer.valueOf(ge.getText());// 个位数
-				shiNum = Integer.valueOf(shi.getText());// 十位数
-				baiNum = Integer.valueOf(bai.getText());// 百位数
-				if (geNum != shiNum && shiNum != baiNum && geNum != baiNum) {
-					betting.setType(3);
-					betting.setResult(1);
-					betting.setAward(betting.getCost() * (1 + Constant.BACK_THREE_WIN_RATIO));
-				} else {
-					betting.setType(4);
-					betting.setResult(0);
-					betting.setAward(0);
+				String lastNumStr = lastNum0.getText() + lastNum1.getText() + lastNum2.getText() + lastNum3.getText()
+						+ lastNum4.getText();
+				try {
+					FileUtils.write(log, "\n开奖号码" + lastNumStr, true);
+				} catch (IOException e) {
+				}
+				betting.setNum(lastNumStr);
+				try {
+					FileUtils.write(log, "\n开奖号码" + betting, true);
+				} catch (IOException e) {
 				}
 				isEnd = true;
 			} catch (Exception e) {
@@ -288,12 +333,8 @@ public class BackThree {
 		boolean isEnd = false;
 		while (!isEnd) {
 			try {
-				driver.navigate().to(domain + "?index.php");
-				Thread.sleep(5000);
-				WebElement r_cqss = driver.findElement(By.id(lottoryType));
-				// driver.navigate().to("https://www.xbtx88.com/?nav=ssc");
-				r_cqss.click();
-				Thread.sleep(5000);
+				driver.navigate().to(CQ_URL);
+				Thread.sleep(sleepTime);
 				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 				if (LocalDateTime.now().getHour() >= 10 || LocalDateTime.now().getHour() <= 2) {
 					isEnd = true;
