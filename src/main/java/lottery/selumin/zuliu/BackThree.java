@@ -35,6 +35,8 @@ public class BackThree {
 	private static final int sleepTime = 2000;
 	public static final String domain = "https://www.yrcf666.com/?index.php";
 	public static final String CQ_URL = "https://www.yrcf666.com/?controller=default&action=lotterybet&nav=ssc";
+	private final static String DERIVER_PATH = "D:\\selumin\\zuliu\\chromedriver.exe";
+	private static final String TRACE_COUNT = "10";
 
 	public static int count = 10;
 	public static File log = new File(Constant.LOG_PATH + LocalDate.now().toString() + "组三");
@@ -50,7 +52,7 @@ public class BackThree {
 
 	public static void main(String[] args) {
 
-		System.setProperty("webdriver.chrome.driver", Constant.DERIVER_PATH);
+		System.setProperty("webdriver.chrome.driver", DERIVER_PATH);
 		WebDriver driver = new ChromeDriver();
 		// 登录
 		while (!login(driver)) {
@@ -63,7 +65,7 @@ public class BackThree {
 
 	public static void logger(String msg) {
 		try {
-			FileUtils.write(log, msg+"\n", true);
+			FileUtils.write(log, msg + "\n", true);
 		} catch (IOException e) {
 		}
 	}
@@ -257,7 +259,7 @@ public class BackThree {
 		Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
 		WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
 		WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
-		lt_trace_qissueno.selectByValue("10");
+		lt_trace_qissueno.selectByValue(TRACE_COUNT);
 		lt_trace_ok.click();
 		WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
 
@@ -326,7 +328,7 @@ public class BackThree {
 				} catch (IOException e) {
 				}
 				betting.setNum(lastNumStr);
-				
+
 				isEnd = true;
 			} catch (Exception e) {
 				isEnd = false;
