@@ -31,8 +31,8 @@ public class Yrapp {
 
 	public static final String lottoryType = "r_cqss";
 	private static final int sleepTime = 2000;
-	public static final String domain = "https://www.yiruncaifu168.com/?index.php";
-	public static final String CQ_URL = "https://www.yiruncaifu168.com/?controller=default&action=lotterybet&nav=ssc";
+	public static final String domain = "https://www.yrcf99.com/?index.php";
+	public static final String CQ_URL = "https://www.yrcf99.com/?controller=default&action=lotterybet&nav=ssc";
 	// public static final String CQ_URL =
 	// "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
 
@@ -47,6 +47,9 @@ public class Yrapp {
 			}
 		}
 	}
+
+	private static double[] moneyTimes = { 46.87, 71.57, 108.36, 133.06, 165.31, 190.01, 218.23, 252.00, 276.19, 309.96,
+			332.64, 363.38, 388.08, 421.34, 455.62, 481.82, 507.02, 537.77, 568.51, 591.70 };
 
 	public static void main(String[] args) {
 
@@ -65,6 +68,8 @@ public class Yrapp {
 		driver.navigate().refresh();
 		OneDayBetting120 odb = new OneDayBetting120(getCurrentMoney(driver));
 		while (!odb.isFinish()) {
+			odb.setCurrentMoney(getCurrentMoney(driver));
+
 			betting(driver, odb);
 			refreshWait(driver);
 		}
@@ -83,7 +88,7 @@ public class Yrapp {
 		// 输入关键字
 		// userName.sendKeys(readVerifyCode("用户名"));
 		// password.sendKeys(readVerifyCode("密码"));
-		userName.sendKeys("lingran");
+		userName.sendKeys("lingran120");
 		password.sendKeys("h523588");
 		String code = readVerifyCode("验证码");
 		verifyCode.sendKeys(code);
@@ -186,7 +191,14 @@ public class Yrapp {
 				Select lt_trace_qissueno = new Select(driver.findElement(By.id("lt_trace_qissueno")));
 				WebElement lt_trace_ok = driver.findElement(By.id("lt_trace_ok"));
 				WebElement lt_sendok_c2 = driver.findElement(By.id("lt_sendok_c2"));
+				WebElement lt_trace_margin = driver.findElement(By.id("lt_trace_margin"));
+				WebElement lt_trace_times_margin = driver.findElement(By.id("lt_trace_times_margin"));
+				Integer times = caculateTime(odb.getCurrentMoney());
+				lt_trace_margin.clear();
+				lt_trace_margin.sendKeys("10");
 				lt_trace_qissueno.selectByValue("10");
+				lt_trace_times_margin.clear();
+				lt_trace_times_margin.sendKeys(times.toString());
 				lt_trace_ok.click();
 				WebElement confirm_yes = driver.findElement(By.id("confirm_yes"));
 
@@ -214,6 +226,15 @@ public class Yrapp {
 			Log.info(e.getMessage());
 		}
 		return null;
+	}
+
+	private static Integer caculateTime(double currentMoney) {
+		for (int i = moneyTimes.length - 1; i >= 0; i--) {
+			if (currentMoney >= moneyTimes[i]) {
+				return i + 1;
+			}
+		}
+		return 1;
 	}
 
 	public static void waitingResult(Betting120 betting, WebDriver driver) {

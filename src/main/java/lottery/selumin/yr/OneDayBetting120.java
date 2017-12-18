@@ -27,7 +27,7 @@ public class OneDayBetting120 {
 	}
 	public boolean isCanBet() {
 		if (bettingList.isEmpty()) {
-			return false;
+			return true;
 		}
 		if(bettingCount>0){
 			return false;
@@ -48,6 +48,9 @@ public class OneDayBetting120 {
 	public boolean isSecondMiss() {
 		if (bettingList.isEmpty()) {
 			return false;
+		}
+		if (bettingList.peek().isWin()) {
+			return true;
 		}
 		if (bettingList.peek().isLose()) {
 			return false;
@@ -223,7 +226,7 @@ public class OneDayBetting120 {
 	}
 
 	public boolean isFinish() {
-		return false;
+		return oldMoney*2<currentMoney;
 	}
 
 	public void resetAimMoney(double currentMoney) {
