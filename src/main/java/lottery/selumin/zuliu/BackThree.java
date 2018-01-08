@@ -103,7 +103,7 @@ public class BackThree {
 		// 输入关键字
 		// userName.sendKeys(readVerifyCode("用户名"));
 		// password.sendKeys(readVerifyCode("密码"));
-		userName.sendKeys("lingran120");
+		userName.sendKeys("lingran");
 		password.sendKeys("h523588");
 		String code = readVerifyCode("验证码");
 		verifyCode.sendKeys(code);
