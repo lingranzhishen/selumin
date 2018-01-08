@@ -195,7 +195,7 @@ public class Yrapp {
 				WebElement lt_trace_times_margin = driver.findElement(By.id("lt_trace_times_margin"));
 				Integer times = caculateTime(odb.getCurrentMoney());
 				lt_trace_margin.clear();
-				lt_trace_margin.sendKeys("10");
+				lt_trace_margin.sendKeys("40");
 				lt_trace_qissueno.selectByValue("10");
 				lt_trace_times_margin.clear();
 				lt_trace_times_margin.sendKeys(times.toString());
