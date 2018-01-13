@@ -11,7 +11,7 @@ public class OneDayBetting120 {
     public static double initialMoney = 0.0;
     public static double winningAim = 56.5;
     public static int MAX_MISS_COUNT = 10;
-    public static int MIN_MISS_COUNT = 5;
+    public static int MIN_MISS_COUNT = 10;
     public static int TIMES_COUNT = 1;
     private Stack<Betting120> bettingList;
     private double oldMoney;
@@ -50,9 +50,9 @@ public class OneDayBetting120 {
         if (bettingList.isEmpty()) {
             return false;
         }
-        if (bettingList.peek().isWin()) {
-            return true;
-        }
+//        if (bettingList.peek().isWin()) {
+//            return true;
+//        }
         if (bettingList.peek().isLose()) {
             return false;
         }
@@ -227,7 +227,7 @@ public class OneDayBetting120 {
     }
 
     public boolean isFinish() {
-        return oldMoney * 1.1 < currentMoney;
+        return oldMoney * 2 < currentMoney;
     }
 
     public void resetAimMoney(double currentMoney) {
