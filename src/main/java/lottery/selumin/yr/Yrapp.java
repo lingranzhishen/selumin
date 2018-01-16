@@ -31,8 +31,8 @@ public class Yrapp {
 
 	public static final String lottoryType = "r_cqss";
 	private static final int sleepTime = 2000;
-	public static final String domain = "https://www.yrcf99.com/?index.php";
-	public static final String CQ_URL = "https://www.yrcf99.com/?controller=default&action=lotterybet&nav=ssc";
+	public static final String domain = "https://www.yiruncaifu666.com/?index.php";
+	public static final String CQ_URL = "https://www.yiruncaifu666.com/?controller=default&action=lotterybet&nav=ssc";
 	// public static final String CQ_URL =
 	// "https://www.yiruncaifu.com/?controller=default&action=lotterybet&nav=ssc&curmid=2339";
 

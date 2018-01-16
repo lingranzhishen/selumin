@@ -28,7 +28,7 @@ public class OneDayBetting120 {
 
     public boolean isCanBet() {
         if (bettingList.isEmpty()) {
-            return true;
+            return false;
         }
         if (bettingCount > 0) {
             return false;
